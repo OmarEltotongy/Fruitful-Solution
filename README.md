@@ -35,9 +35,8 @@ This project implements DC motor control using an MP6551 motor driver. It allows
 ## Example Test Code
 ```c
 int main() {
-    ADC_init();
-    Timer0_init();
-    
+    ADC_init(); 
+       
     MotorSpecs myMotor = {3.0, 0.02, 1000, 1.3, 1094, 0.13, 0.8};
     DcMotor_Init(&myMotor);
     
