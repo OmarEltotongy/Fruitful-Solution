@@ -1,0 +1,13 @@
+/*
+ * motor.h
+ *
+ *  Created on: Jan 29, 2025
+ *      Author: Omar Eltoutongy
+ */
+
+#ifndef DC_MOTOR_H_
+#define DC_MOTOR_H_
+
+
+
+#endif /* DC_MOTOR_H_ */

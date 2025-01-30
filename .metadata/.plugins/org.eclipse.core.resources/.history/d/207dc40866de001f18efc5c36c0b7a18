@@ -1,0 +1,73 @@
+/*
+ * ExampleUsage.c
+ *
+ *  Created on: Jan 29, 2025
+ *      Author: Omar Eltoutongy
+ */
+#include "dc_motor.h"
+#include "timer.h"
+#include <avr/io.h>
+#include<util/delay.h>
+
+uint16  g_tick=0;
+void motorMoving(void);
+
+
+int main(void)
+{
+	SREG   |= (1<<7); // global interrupt
+	/*Initializing with Handpiece Motor
+	 *
+	 *Specification:
+
+	*rated_voltage 		3 	 	Volts
+    *rated_torque 		0.02 	Kg·Cm
+    *rated_speed        1000 	RPM
+    *rated_current      1.3		Amperes
+    *no_load_speed      1094 	RPM
+    *no_load_current    0.13 	Amperes
+    *stall_current 	    ≤0.8	Amperes
+	  */
+	MotorSpecs myMotor = {3.0, 0.02, 1000, 1.3, 1094, 0.13, 0.8};
+    // Initialize the DC motor and set it up
+    DcMotor_Init(&myMotor);
+
+    Timer1_setCallBack(motorMoving);
+
+    // Timer configuration for a 1 ms interrupt (using 16 MHz clock, prescaler of 64)
+	Timer1_ConfigType t1Config={0,0,PS_64_T1,NORM_T1,NONE,TOGGLE_T1};
+	Timer1_init(&t1Config);
+
+    // Main loop: continuously run the motor logic
+    while (1) {
+        // The motor control and timer callbacks are handled in the interrupt service routine
+    }
+
+    return 0;
+}
+
+void motorMoving()
+{
+    g_tick++;  // Increment the tick counter every 1 ms
+
+    if (g_tick >= 0 && g_tick < 2000) {  // Rotate CCW for 2 seconds (2000 ms)
+        DcMotorControlSpeed(CCW_ROTATION, 100);  // Rotate CCW
+    }
+    else if (g_tick >= 2000 && g_tick < 4000) {  // Hold for 2 seconds (2000 ms)
+        DcMotorControlSpeed(NO_ROTATION, 0);  // Stop the motor
+    }
+    else if (g_tick >= 4000 && g_tick < 6000) {  // Rotate CW for 2 seconds (2000 ms)
+        DcMotorControlSpeed(CW_ROTATION, 100);  // Rotate CW
+    }
+    else if (g_tick >= 6000 && g_tick < 8000) {  // Hold for 2 seconds (2000 ms)
+        DcMotorControlSpeed(NO_ROTATION, 100);  // Stop the motor
+    }
+    else if (g_tick >= 8000) {  // After 8 seconds total, stop the motor and disable the timer
+        DcMotorControlSpeed(NO_ROTATION, 100);  // Stop the motor
+        Timer1_deInit();  // Disable the timer
+        g_tick = 0;  // Reset tick counter
+    }
+}
+
+
+

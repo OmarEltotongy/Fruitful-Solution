@@ -1,0 +1,82 @@
+/*
+ * motor.h
+ *
+ *  Created on: Jan 29, 2025
+ *      Author: Omar Eltoutongy
+ */
+
+#ifndef DC_MOTOR_H_
+#define DC_MOTOR_H_
+
+#include "std_types.h"
+/*******************************************************************************
+ *                                Definitions                                  *
+ *******************************************************************************/
+
+/* DC MotorS Driver HW Ports and Pins IDs */
+#define DC_MOTOR_INPUT1_PORT_ID   PORTC_ID
+#define DC_MOTOR_INPUT1_PIN_ID    PIN0_ID
+
+#define DC_MOTOR_INPUT2_PORT_ID   PORTC_ID
+#define DC_MOTOR_INPUT2_PIN_ID    PIN1_ID
+
+
+/*******************************************************************************
+ *                         Types Declaration                                   *
+ *******************************************************************************/
+/*General Motor Specification parameters*/
+typedef struct {
+    float32 rated_voltage;      // Volts
+    float32 rated_torque;       // kg·cm
+    float32 rated_speed;        // RPM
+    float32 rated_current;      // Amperes
+    float32 no_load_speed;      // RPM
+    float32 no_load_current;    // Amperes
+    float32 stall_current;      // Amperes
+} MotorSpecs;
+
+
+typedef enum
+{
+	NO_ROTATION,CW_ROTATION,CCW_ROTATION
+}DcMotor_State;
+
+/*******************************************************************************
+ *                      Functions Prototypes                                   *
+ *******************************************************************************/
+
+/*
+ * Description :
+ * Initialize the DC Motor:
+ * 1. Setup the DC Motor pins directions by use the GPIO driver.
+ * 2. Enable Driver.
+ * 3. Initialize DC Motor State as Idle.
+ */
+void DcMotor_Init(void);
+
+/*
+ * Description :
+ * Set Speed percentage of the DC Motor:
+ * 1. Set Direction depending on argument.
+ * 2. Set PWM using PWM Driver.
+ */
+void DcMotorControlSpeed(DcMotor_State direction,uint8 speed);
+
+/*
+ * Description :
+ * A helper function to Set Direction of the DC Motor:
+ * 1. Set Direction depending on argument.
+ * 2. Set PWM using PWM Driver.
+ */
+void detectDirection(DcMotor_State state)
+
+/*
+ * Description :
+ * Set Torque percentage of the DC Motor:
+ * 1. Set Direction depending on argument.
+ * 2. Set PWM using PWM Driver.
+ */
+void DcMotorControlTorque(DcMotor_State direction,uint8 torque);
+
+
+#endif /* DC_MOTOR_H_ */

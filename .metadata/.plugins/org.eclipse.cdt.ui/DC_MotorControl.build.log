@@ -1,0 +1,56 @@
+12:06:39 **** Incremental Build of configuration Debug for project DC_MotorControl ****
+make all 
+Building file: ../ExampleUsage.c
+Invoking: AVR Compiler
+avr-gcc -Wall -g2 -gstabs -O0 -fpack-struct -fshort-enums -ffunction-sections -fdata-sections -std=gnu99 -funsigned-char -funsigned-bitfields -mmcu=atmega32 -DF_CPU=1000000UL -MMD -MP -MF"ExampleUsage.d" -MT"ExampleUsage.o" -c -o "ExampleUsage.o" "../ExampleUsage.c"
+In file included from ../ExampleUsage.c:12:
+c:/winavr-20100110/lib/gcc/../../avr/include/util/delay.h:90:3: warning: #warning "Compiler optimizations disabled; functions from <util/delay.h> won't work as designed"
+../ExampleUsage.c: In function 'main':
+../ExampleUsage.c:54: warning: format '%.2f' expects type 'double', but argument 2 has type 'float32'
+Finished building: ../ExampleUsage.c
+ 
+Building file: ../adc.c
+Invoking: AVR Compiler
+avr-gcc -Wall -g2 -gstabs -O0 -fpack-struct -fshort-enums -ffunction-sections -fdata-sections -std=gnu99 -funsigned-char -funsigned-bitfields -mmcu=atmega32 -DF_CPU=1000000UL -MMD -MP -MF"adc.d" -MT"adc.o" -c -o "adc.o" "../adc.c"
+Finished building: ../adc.c
+ 
+Building file: ../dc_motor.c
+Invoking: AVR Compiler
+avr-gcc -Wall -g2 -gstabs -O0 -fpack-struct -fshort-enums -ffunction-sections -fdata-sections -std=gnu99 -funsigned-char -funsigned-bitfields -mmcu=atmega32 -DF_CPU=1000000UL -MMD -MP -MF"dc_motor.d" -MT"dc_motor.o" -c -o "dc_motor.o" "../dc_motor.c"
+Finished building: ../dc_motor.c
+ 
+Building target: DC_MotorControl.elf
+Invoking: AVR C Linker
+avr-gcc -Wl,-Map,DC_MotorControl.map -mmcu=atmega32 -o "DC_MotorControl.elf"  ./ExampleUsage.o ./adc.o ./dc_motor.o ./gpio.o ./timer.o   
+Finished building target: DC_MotorControl.elf
+ 
+Invoking: AVR Create Extended Listing
+avr-objdump -h -S DC_MotorControl.elf  >"DC_MotorControl.lss"
+Finished building: DC_MotorControl.lss
+ 
+Create Flash image (ihex format)
+avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex DC_MotorControl.elf  "DC_MotorControl.hex"
+Finished building: DC_MotorControl.hex
+ 
+Create eeprom image (ihex format)
+avr-objcopy -j .eeprom --no-change-warnings --change-section-lma .eeprom=0 -O ihex DC_MotorControl.elf  "DC_MotorControl.eep"
+Finished building: DC_MotorControl.eep
+ 
+Invoking: Print Size
+avr-size --format=avr --mcu=atmega32 DC_MotorControl.elf
+AVR Memory Usage
+----------------
+Device: atmega32
+
+Program:   11546 bytes (35.2% Full)
+(.text + .data + .bootloader)
+
+Data:        554 bytes (27.1% Full)
+(.data + .bss + .noinit)
+
+
+Finished building: sizedummy
+ 
+
+12:06:40 Build Finished. 0 errors, 2 warnings. (took 1s.275ms)
+

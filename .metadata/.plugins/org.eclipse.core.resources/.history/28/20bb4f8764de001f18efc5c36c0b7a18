@@ -1,0 +1,73 @@
+/*
+ * ExampleUsage.c
+ *
+ *  Created on: Jan 29, 2025
+ *      Author: Omar Eltoutongy
+ */
+#include "dc_motor.h"
+#include "timer.h"
+#include <avr/io.h>
+#include<util/delay.h>
+
+uint16  g_tick=0;
+void motorMoving(void);
+
+
+int main(void)
+{
+	SREG   |= (1<<7); // global interrupt
+	/*Initializing with Handpiece Motor
+	 *
+	 *Specification:
+
+	*rated_voltage 		3 	 	Volts
+    *rated_torque 		0.02 	Kg·Cm
+    *rated_speed        1000 	RPM
+    *rated_current      1.3		Amperes
+    *no_load_speed      1094 	RPM
+    *no_load_current    0.13 	Amperes
+    *stall_current 	    ≤0.8	Amperes
+	  */
+	MotorSpecs myMotor = {3.0, 0.02, 1000, 1.3, 1094, 0.13, 0.8};
+    // Initialize the DC motor and set it up
+    DcMotor_Init(&myMotor);
+
+    Timer1_setCallBack(motorMoving);
+
+    // Timer configuration for a 1 ms interrupt
+	Timer1_ConfigType t1Config={0,0,PS_64_T1,NORM_T1,NONE,TOGGLE_T1};
+	Timer1_init(&t1Config);
+
+    // Main loop: continuously run the motor logic
+    while (1) {
+        // The motor control and timer callbacks are handled in the interrupt service routine
+    }
+
+    return 0;
+}
+
+void motorMoving()
+{
+	g_tick++;
+		if(g_tick==16) //after 8 seconds, disable timer & motor
+		{
+			DcMotorControlSpeed(NO_ROTATION,100);
+			Timer1_deInit();
+			g_tick=0;
+		}
+		else if(g_tick< 12 && g_tick > 8) //rotate CW for 2 sec
+		{
+			DcMotorControlSpeed(CW_ROTATION,100);
+		}
+		else if(g_tick< 8 && g_tick > 4 ) //hold for 2 sec
+		{
+			DcMotorControlSpeed(NO_ROTATION,100);
+		}
+		else //rotate CCW for 2 sec
+		{
+			DcMotorControlSpeed(CCW_ROTATION,100);
+		}
+}
+
+
+

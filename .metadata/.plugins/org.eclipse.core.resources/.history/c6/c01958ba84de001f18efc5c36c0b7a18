@@ -1,0 +1,147 @@
+/*
+ * motor.c
+ *
+ *  Created on: Jan 29, 2025
+ *      Author: Omar Eltoutongy
+ */
+
+#include "dc_motor.h"
+#include "adc.h"
+#include "common_macros.h" /* For GET_BIT Macro */
+#include "gpio.h"
+#include "std_types.h"
+#include "timer.h"
+
+/*******************************************************************************
+ *                    		 Global Variables                                  *
+ *******************************************************************************/
+
+/* To make sure if any function needed any parameter of the motor, it can see them*/
+static MotorSpecs motor_specs;
+
+
+/*******************************************************************************
+ *                      Functions Definitions                                  *
+ *******************************************************************************/
+
+/*
+ * Description :
+ * Initialize the DC Motor:
+ * 1. Setup the DC Motor pins directions by use the GPIO driver.
+ * 2. Enable Driver.
+ * 3. Initialize DC Motor State as Idle.
+ */
+void DcMotor_Init(const MotorSpecs *motor)
+{
+	/* Configure Pins as OUTPUT */
+	GPIO_setupPinDirection(DC_MOTOR_INPUT1_PORT_ID,DC_MOTOR_INPUT1_PIN_ID,PIN_OUTPUT);
+	GPIO_setupPinDirection(DC_MOTOR_INPUT2_PORT_ID,DC_MOTOR_INPUT2_PIN_ID,PIN_OUTPUT);
+
+
+	/* Initialize Pins as LOGIC_LOW */
+	GPIO_writePin(DC_MOTOR_INPUT1_PORT_ID,DC_MOTOR_INPUT1_PIN_ID,LOGIC_LOW);
+	GPIO_writePin(DC_MOTOR_INPUT2_PORT_ID,DC_MOTOR_INPUT2_PIN_ID,LOGIC_LOW);
+
+	/*initialize specification of the motor*/
+
+	/* Store motor specifications using arrow operator */
+	motor_specs.rated_voltage    = motor->rated_voltage;
+	motor_specs.rated_torque     = motor->rated_torque;
+	motor_specs.rated_speed      = motor->rated_speed;
+	motor_specs.rated_current    = motor->rated_current;
+	motor_specs.no_load_speed    = motor->no_load_speed;
+	motor_specs.no_load_current  = motor->no_load_current;
+	motor_specs.stall_current    = motor->stall_current;
+
+}
+
+/*
+ * Description :
+ *	Detect which direction is used
+ *	0- No Rotation
+ *	1- CW Rotation
+ *	2- CCW Rotation
+ */
+void detectDirection(DcMotor_State direction)
+{
+	switch(direction)
+		{
+		case NO_ROTATION:
+			GPIO_writePin(DC_MOTOR_INPUT1_PORT_ID,DC_MOTOR_INPUT1_PIN_ID,LOGIC_LOW);
+			GPIO_writePin(DC_MOTOR_INPUT2_PORT_ID,DC_MOTOR_INPUT2_PIN_ID,LOGIC_LOW);
+			break;
+		case CW_ROTATION:
+				GPIO_writePin(DC_MOTOR_INPUT1_PORT_ID,DC_MOTOR_INPUT1_PIN_ID,LOGIC_HIGH);
+				GPIO_writePin(DC_MOTOR_INPUT2_PORT_ID,DC_MOTOR_INPUT2_PIN_ID,LOGIC_LOW);
+				break;
+		case CCW_ROTATION:
+				GPIO_writePin(DC_MOTOR_INPUT1_PORT_ID,DC_MOTOR_INPUT1_PIN_ID,LOGIC_LOW);
+				GPIO_writePin(DC_MOTOR_INPUT2_PORT_ID,DC_MOTOR_INPUT2_PIN_ID,LOGIC_HIGH);
+				break;
+		}
+}
+
+/*
+ * Description :
+ * Set Speed percentage of the DC Motor:
+ * 1. Set Direction depending on argument.
+ * 2. Set PWM using PWM Driver.
+ */
+void DcMotorControlSpeed(DcMotor_State direction,uint8 speed)
+{
+	detectDirection(direction);
+
+	// Constrain speed between 0-100%
+	if (speed > 100) speed = 100;
+
+	Timer0_pwmAdjust(speed); //send duty cycle to timer
+}
+
+/*
+ * Description :
+ * Set Torque percentage of the DC Motor:
+ * 1. Set Direction depending on argument.
+ * 2. Set PWM using PWM Driver.
+ */
+void DcMotorControlTorque(DcMotor_State direction,uint8 torque)
+{
+    uint8 pwm_duty_cycle;
+	detectDirection(direction);
+ /*Torque is directly proportional to current.
+  *	PWM alone cannot precisely control torque,
+  *	but adjusting PWM based on current feedback allows accurate torque control.*/
+
+	float target_current = torque / 0.0154;  // Using k_t ≈ 0.0154
+
+	/*torque constant Kt = 0.02 / 1.3 ≈ 0.0154 Kg·cm/A*/ /*where T= Kt x I */
+
+	float measured_current = readMotorCurrent();
+
+	    if (measured_current < target_current) {
+	        increasePWM();  // Increase duty cycle
+	    } else if (measured_current > target_current) {
+	        decreasePWM();  // Decrease duty cycle
+	    }
+
+
+
+	// Calculate the PWM duty cycle based on the desired torque (as a percentage)
+	    // Assuming torque is given as a percentage (0-100%), where 100% means max torque.
+	    // You can adjust this logic based on the motor's specifications and current sensing.
+
+	    // For simplicity, let's assume the PWM duty cycle is directly proportional to the torque:
+	    pwm_duty_cycle = torque;  // This can be adjusted with motor's specific torque-to-current relationship
+
+	    // Adjust PWM duty cycle for motor speed and torque control
+	    Timer0_pwmAdjust(pwm_duty_cycle);  // Send duty cycle to Timer0 for PWM adjustment
+
+	    // Here you could also implement logic to read a current sensor and adjust the PWM if necessary.
+	    // For example, if the actual motor current exceeds a threshold, reduce the PWM to prevent overloading.
+
+}
+
+float32 readMotorCurrent() {
+    int adc_value = ADC_readChannel(CM1_ADC_CHANNEL);
+    float voltage = (adc_value / ADC_MAXIMUM_VALUE) * ADC_REF_VOLT_VALUE;
+    return voltage / MP6551_GAIN;  // Convert voltage to current
+}

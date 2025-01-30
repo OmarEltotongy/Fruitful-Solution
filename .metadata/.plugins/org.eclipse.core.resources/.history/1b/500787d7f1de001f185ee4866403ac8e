@@ -1,0 +1,114 @@
+/*
+ * dc_motor.h
+ *
+ *  Created on: Jan 29, 2025
+ *      Author: Omar Eltoutongy
+ */
+
+#ifndef DC_MOTOR_H_
+#define DC_MOTOR_H_
+
+#include "std_types.h"
+/*******************************************************************************
+ *                                Definitions                                  *
+ *******************************************************************************/
+
+/* DC MotorS Driver HW Ports and Pins IDs */
+#define DC_MOTOR_INPUT1_PORT_ID   PORTC_ID
+#define DC_MOTOR_INPUT1_PIN_ID    PIN0_ID
+
+#define DC_MOTOR_INPUT2_PORT_ID   PORTC_ID
+#define DC_MOTOR_INPUT2_PIN_ID    PIN1_ID
+
+
+#define STALL_ADC_THRESHOLD 	  200 // ADC value corresponding to stall current (depends on HW)
+#define MP6551_SENSE_RESISTOR 	  5000
+/*******************************************************************************
+ *                         Types Declaration                                   *
+ *******************************************************************************/
+/*General Motor Specification parameters*/
+typedef struct {
+    float32 rated_voltage;      // Volts
+    float32 rated_torque;       // kg·cm
+    float32 rated_speed;        // RPM
+    float32 rated_current;      // Amperes
+    float32 no_load_speed;      // RPM
+    float32 no_load_current;    // Amperes
+    float32 stall_current;      // Amperes
+} MotorSpecs;
+
+
+typedef enum
+{
+	NO_ROTATION,CW_ROTATION,CCW_ROTATION
+}DcMotor_State;
+
+/*******************************************************************************
+ *                      Functions Prototypes                                   *
+ *******************************************************************************/
+
+/*
+ * Description :
+ * Initialize the DC Motor:
+ * 1. Setup the DC Motor pins directions by use the GPIO driver.
+ * 2. Enable Driver.
+ * 3. Initialize DC Motor State as Idle.
+ */
+void DcMotor_Init(const MotorSpecs *motor);
+
+/*
+ * Description :
+ * Set Speed percentage of the DC Motor:
+ * 1. Set PWM using PWM Driver.
+ */
+void DcMotorControlSpeed(DcMotor_State direction,uint8 speed);
+
+/*
+ * Description :
+ * A helper function to Set Direction of the DC Motor:
+ * 1. Set Direction depending on argument.
+ * 2. Set PWM using PWM Driver.
+ */
+void setDirection(DcMotor_State direction);
+
+/*
+ * Description :
+ * Set Torque percentage of the DC Motor:
+ * 1. Set Direction depending on argument.
+ * 2. Set PWM using PWM Driver.
+ */
+float32 DcMotorGetTorque();
+
+/*
+ * Description :
+ * TTo precisely control torque, use current feedback:
+ * 1. Read ADC Channel
+ * 2. voltage will equal: (adc_value / ADC_MAXIMUM_VALUE) * ADC_REF_VOLT_VALUE
+ * 3. Retrun Adc reading
+ */
+float32 readMotorCurrent(uint8 channel);
+/*
+ * Description :
+ *	1. Read the motor current from ADC (CM1 and CM2).
+ *	2. Calculate the current needed for the required torque.
+ *	3. If the calculated torque exceeds the rated torque:
+ *		Adjust the SR potentiometer to lower the max current.
+ *	4.If torque is within limits, no adjustment is needed.
+ */
+void adjustSRforTorque(float32 desired_torque);
+
+/*
+ * Description :
+ *	1. Tell the user that if u want less torque, increase Sr resistance of the driver.
+ */
+void increaseSRResistance();
+
+/*
+ * Description :
+ *	1. Tell the user that if u want more torque, decrease Sr resistance of the driver.
+ */
+void decreaseSRResistance();
+
+
+
+#endif /* DC_MOTOR_H_ */
